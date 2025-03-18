@@ -1,10 +1,10 @@
 # News Processor based on PyArrow Acero
 
-Proof Of Concept to pull news data from an RSS feed, and then store them in a Data Lake using Delta Lake's `delta-rs` as a writer. The compute pipeline is defined using the `PyArrow Acero` library.
+Proof Of Concept to pull news data from an RSS feed, and then store them in a data lake using Delta Lake's `delta-rs` as a writer. The compute pipeline is defined using the `PyArrow Acero` library.
 
 It will iterate over the RSS feeds, pull the data, and extract the desired fields, and store them into a Delta Lake table. To avoid processing the same RSS Feed entry twice, the ids are stored in the `rss_state.json`.
 
-The RSS data comes from BBC's RSS feeds, explore the [BBC's page](https://www.bbc.co.uk/news/10628494).
+The RSS data comes from BBC's RSS feeds, explore the [BBC's page](https://www.bbc.co.uk/news/10628494). A more detailed explanation of the code [can be found here](https://pol-santamaria.com/tech/rss-feed-acero-delta-lake).
 
 ## Instructions
 
