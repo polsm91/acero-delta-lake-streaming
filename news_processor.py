@@ -1,9 +1,19 @@
 import json
 import os
+import logging
 from typing import List, Optional
 
 from openai import OpenAI
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
+
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 
 
 # Define the Pydantic models
@@ -22,7 +32,7 @@ class EventResponse(BaseModel):
     category: str = Field(
         ...,
         description="Category of the event.",
-        enum=["Political Turmoil", "New Product Announced", "Leadership Change", "Housing Issues",  "Others"]
+        enum=["Political Turmoil", "New Product Announced", "Leadership Change", "Housing Issues", "Others"]
     )
 
 
@@ -50,65 +60,55 @@ class NewsProcessor:
             raise ValueError(
                 "OpenAI API key must be provided either through constructor or OPENAI_API_KEY environment variable")
 
-    def upload_file(self):
-        self.validate("training_set.jsonl")
-        self.client.files.create(
-            file=open("training_set.jsonl", "rb"),
-            purpose="fine-tune"
-        )
 
-    def fine_tune_with_file(self):
-        self.client.fine_tuning.jobs.create(
-            training_file="file-argC59EYP8biP1pnFw6OR4Kh",
-            model="gpt-3.5-turbo",
-            suffix="news-impact"
-        )
+    def analyze_text(self, text: str) -> Optional[EventResponse]:
+        # Convert the Pydantic model to OpenAI-compatible JSON Schema
+        function_schema = {
+            "name": "extract_event",
+            "description": "Extracts actors from a news article and classifies event type.",
+            "parameters": EventResponse.model_json_schema()
+        }
 
-    def validate(self, filename):
-        with open(filename) as file:
-            try:
-                json.load(file)  # put JSON-data to a variable
-            except json.decoder.JSONDecodeError as e:
-                print("Invalid JSON")  # in case json is invalid
-                print(e)
+        prompt_messages = [
+            {
+                "role": "system",
+                "content": """You are a structured information extraction engine specialized in named entity recognition and event analysis.
 
-    def analyze_text(self, text):
-        response = self.client.beta.chat.completions.parse(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": "Identify the actors involved in the news article. Then, analyze the content and classify the news into these categories: Political Turmoil, New Product Announced, Leadership Change, Housing Issues, or Others."
-                        }
-                    ]
-                },
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": text
-                        }
-                    ]
-                },
-                {
-                    "role": "assistant",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": "{\"main_actors\":[{\"name\":\"Apple\",\"role\":\"Company announcing a new product launch\"}],\"other_actors\":[],\"category\":\"New Product Announced\"}"
-                        }
-                    ]
-                }
-            ],
-            response_format=EventResponse,
-            temperature=0.7,
-            max_tokens=64,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0
-        )
-        return response.choices[0].message.parsed
+When extracting actors, follow these strict rules:
+1. Always use specific named entities, not generic terms like "researchers", "scientists", "US", "M&A", "Co-op", etc.
+2. For organizations and institutions use full official names when available
+3. For companies and individuals avoid generic terms like "researchers" or "scientists" and use their full names when available
+4. If a specific name cannot be determined, use the most specific available identifier.
+
+Remember: The goal is to identify specific, named entities that can be tracked across articles and their roles, not generic categories."""
+            },
+            {
+                "role": "user",
+                "content": text
+            }
+        ]
+
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4-turbo",
+                messages=prompt_messages,
+                tools=[{"type": "function", "function": function_schema}],
+                tool_choice={"type": "function", "function": {"name": "extract_event"}},
+                temperature=0.3
+            )
+
+            # Extract function call arguments from the assistant's reply
+            tool_calls = response.choices[0].message.tool_calls
+            if not tool_calls:
+                logger.warning("⚠️ Extracting actors and event category from the news article probably failed.")
+                return None
+
+            arguments = tool_calls[0].function.arguments
+            if isinstance(arguments, str):
+                arguments = json.loads(arguments)  # Ensure it's a dict
+
+            return EventResponse(**arguments)
+
+        except (json.JSONDecodeError, ValidationError) as e:
+            logger.error(f"❌ Failed to parse function call output: {e}")
+            return None

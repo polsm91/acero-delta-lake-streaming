@@ -29,18 +29,6 @@ export OPENAI_ORG_ID="your-org-id"  # Optional
 export OPENAI_PROJECT="your-project"  # Optional
 ```
 
-Alternatively, you can pass them directly when initializing the NewsProcessor:
-
-```python
-from news_processor import NewsProcessor
-
-processor = NewsProcessor(
-    api_key="your-api-key",
-    org_id="your-org-id",  # Optional
-    project="your-project"  # Optional
-)
-```
-
 ## Run the script
 
 ```bash
