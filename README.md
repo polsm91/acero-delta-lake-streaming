@@ -1,12 +1,13 @@
 # News Insights - AI-Powered News Analysis with PyArrow Acero and Delta Lake
 
-A proof of concept for collecting, processing, and analyzing news articles using AI and modern data technologies. Built on top of PyArrow Acerousing PyArrow Acero for streaming data processing, Delta Lake for efficient data storage, and OpenAI's GPT models for advanced text analysis.
+A proof of concept for collecting, processing, and analyzing news articles using AI and modern data technologies. Built on top of `PyArrow Acero` for streaming data processing, `Delta Lake` for efficient data storage, and `OpenAI's GPT models` for advanced text analysis.
 
 ## Key Features
 - **Real-time News Collection**: Automated RSS feed collection from BBC News with extensible architecture
 - **AI-Powered Analysis**: Named entity extraction using OpenAI's GPT models (actor, role, category)
 - **Efficient data management**: PyArrow Acero for high-performance streaming data processing and Delta Lake for ACID-compliant data storage and time travel
 
+A more detailed explanation of the code [can be found here](https://pol-santamaria.com/tech/rss-feed-acero-delta-lake/).
 
 ## Quick Start
 
@@ -76,17 +77,6 @@ Will give you:
 2  https://www.bbc.com/news/articles/crkx3vy54nzo#0        BBC         contacted by hackers          False
 3  https://www.bbc.com/news/articles/c9856ge2742o#0      Co-op                     retailer           True
 4  https://www.bbc.com/news/articles/c86jx18y9e2o#0      Apple             technology giant           True
-```
-
-
-
-## Project Structure
-
-```
-news_insights/
-├── __init__.py      # Module exports and versioning
-├── processor.py     # NewsProcessor class for AI analysis
-└── collector.py     # NewsCollector class for RSS feed handling
 ```
 
 
