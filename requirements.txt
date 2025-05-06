@@ -1,3 +1,6 @@
 feedparser~=6.0.0
 pyarrow~=18.1.0
 deltalake~=0.25.0
+openai~=1.65.0
+pydantic~=2.10.0
+pydantic_core~=2.27.0
